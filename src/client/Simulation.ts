@@ -10,6 +10,7 @@ import {
 } from "three";
 import {Particle} from "./Particle";
 import {Rope} from "./Rope";
+import { Cloth } from './Cloth'
 
 
 const SPHERE_RADIUS = 3;
@@ -23,15 +24,19 @@ export class Simulation {
         respawn: () => {
             this.spawnParticles()
         },
-        spawnMethod: "rope",
+        spawnMethod: "cloth",
         arePlanesVisible: false,
         ropeFixed: true,
-        showSpring: false,
+        showSpring: true,
         solverMethod: "verlet",
         bouncing: 0.8,
         lifetime: 80,
-        elasticity: 100,
+        elasticity: 30,
         damping: 5,
+        shearElasticity: 30,
+        shearDamping: 5,
+        bendElasticity: 30,
+        bendDamping: 5,
         // mass: 0.010000001,
         dt: 0.012,
         particlesPerRope: 10,
@@ -41,8 +46,8 @@ export class Simulation {
             z: 0,
         },
         fixedPoint: {
-            x: 0.0000001,
-            y: -2.0000001,
+            x: -2.50000001,
+            y: 5.0000001,
             z: 0.0000001,
         }
     };
@@ -55,7 +60,7 @@ export class Simulation {
     private planeHelpers: PlaneHelper[] = [];
     private sphere = new Sphere(SPHERE_POSITION, SPHERE_RADIUS);
     private sphereMesh = new Mesh(new SphereGeometry(SPHERE_RADIUS - Particle.radius), new MeshPhongMaterial());
-    private ropes: Rope[] = [];
+    private ropesAndCloths: (Rope|Cloth)[] = [];
 
     constructor(scene: Scene, gui: any) {
         this.scene = scene
@@ -74,7 +79,7 @@ export class Simulation {
     private createGui(gui: any) {
         gui.add(this.params, 'removeAllParticles').name('Remove Particles');
         gui.add(this.params, 'respawn').name('Spawn Particles');
-        gui.add(this.params, 'spawnMethod', ['waterfall', 'explosion', 'semi-sphere', 'fountain', 'rope'])
+        gui.add(this.params, 'spawnMethod', ['waterfall', 'explosion', 'semi-sphere', 'fountain', 'rope', 'cloth'])
             .onChange(() => this.spawnParticles())
             .name('Spawn Method');
         gui.add(this.params, 'solverMethod', ['euler-semi', 'euler-orig', 'verlet'])
@@ -94,17 +99,25 @@ export class Simulation {
         //     .onChange((m: number) => this.setMass(m));
         gui.add(this.params, 'ropeFixed')
             .name('Fix Rope')
-            .onChange(() => this.ropes.forEach(rope  => rope.setFixed(this.params.ropeFixed)));
+            .onChange(() => this.ropesAndCloths.forEach(rope  => rope.setFixed(this.params.ropeFixed)));
         gui.add(this.params, 'arePlanesVisible')
             .name('Show Planes')
             .onChange(() => this.togglePlaneHelperVisibility());
         const springsFolder: any = gui.addFolder('Springs');
         springsFolder.add(this.params, 'elasticity', 0, 500)
-            .onChange((e: number) => this.ropes.forEach(r => r.setElasticity(e)));
+            .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e)));
         springsFolder.add(this.params, 'damping', 0, 500)
-            .onChange((d: number) => this.ropes.forEach(r => r.setDamping(d)));
+            .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d)));
+        springsFolder.add(this.params, 'shearElasticity', 0, 500)
+            .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e)));
+        springsFolder.add(this.params, 'shearDamping', 0, 500)
+            .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d)));
+        springsFolder.add(this.params, 'bendElasticity', 0, 500)
+            .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e)));
+        springsFolder.add(this.params, 'bendDamping', 0, 500)
+            .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d)));
         springsFolder.add(this.params, 'showSpring')
-            .onChange((s: boolean) => this.ropes.forEach(r => r.setShowSpring(s)))
+            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setShowSpring(s)))
         const gravityFolder: any = gui.addFolder('Gravity');
         gravityFolder.add(this.params.gravity, 'x', -20, 20)
             .onChange(() => this.applyGravityToAllParticles());
@@ -160,8 +173,11 @@ export class Simulation {
         if(this.params.spawnMethod === "rope"){
             this.spawnRope();
             return
-        } else {
+        }
 
+        if(this.params.spawnMethod === "cloth"){
+            this.spawnCloth();
+            return
         }
         if (this.isMethodAtBeginning()) {
             for (let i = 0; i < 500; i++) {
@@ -182,7 +198,23 @@ export class Simulation {
         springs.forEach(s => {
             this.scene.add(s.getMesh());
         })
-        this.ropes.push(rope);
+        this.ropesAndCloths.push(rope);
+    }
+
+    spawnCloth(){
+
+        const fixedPointA = new Vector3(this.params.fixedPoint.x, this.params.fixedPoint.y, this.params.fixedPoint.z);
+        const cloth = new Cloth(this.params.lifetime, this.params.bouncing, this.params.elasticity, this.params.damping, this.params.shearElasticity, this.params.shearDamping, this.params.bendElasticity, this.params.bendDamping, this.params.ropeFixed, this.params.showSpring, fixedPointA, this.params.particlesPerRope, this.params.particlesPerRope, [0,3,6,9]);
+        const particles = cloth.getParticles();
+        particles.forEach(p => {
+            this.scene.add(p.getMesh());
+            this.particles.push(p)
+        })
+        const springs = cloth.getSprings();
+        springs.forEach(s => {
+            this.scene.add(s.getMesh());
+        })
+        this.ropesAndCloths.push(cloth);
     }
 
     removeAllParticles() {
@@ -193,7 +225,7 @@ export class Simulation {
     }
 
     isMethodAtBeginning() {
-        return this.params.spawnMethod === "semi-sphere" || this.params.spawnMethod === "explosion" || this.params.spawnMethod === "rope"
+        return this.params.spawnMethod === "semi-sphere" || this.params.spawnMethod === "explosion" || this.params.spawnMethod === "rope" || this.params.spawnMethod === "cloth"
     }
 
     update(t: number) {
@@ -203,7 +235,7 @@ export class Simulation {
             this.spawnRandomParticle(this.params.spawnMethod);
         }
 
-        this.ropes.forEach(rope => {
+        this.ropesAndCloths.forEach(rope => {
             rope.update(this.params.fixedPoint);
         })
 
