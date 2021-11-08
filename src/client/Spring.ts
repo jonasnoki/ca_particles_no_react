@@ -15,6 +15,7 @@ export class Spring {
     private elasticity: number
     private damping: number
     private restingDist: number
+    public type: "normal" | "shear" | "bend";
     private mesh: Line
     private showSpring: boolean
     private positionBuffer: BufferAttribute;
@@ -24,12 +25,13 @@ export class Spring {
         color: 0xfaf0be,
     })
 
-    constructor(particleA: SpringParticle, particleB: SpringParticle, elasticity: number, damping: number, showSpring: boolean) {
+    constructor(particleA: SpringParticle, particleB: SpringParticle, elasticity: number, damping: number, showSpring: boolean, type: "normal" | "shear" | "bend" = "normal") {
         this.particleA = particleA
         this.particleB = particleB
         this.elasticity = elasticity
         this.damping = damping
         this.showSpring = showSpring
+        this.type = type
         this.restingDist = this.particleA.getCurrentPosition().clone().sub(this.particleB.getCurrentPosition()).length()
         this.mesh = new Line(this.geometry, Spring.material)
         const pA = this.particleA.getCurrentPosition();

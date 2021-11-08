@@ -65,4 +65,8 @@ export class Rope {
             this.fixedParticle.setPosition(fixedPoint.x, fixedPoint.y, fixedPoint.z);
         }
     }
+
+    public setFixedPoint(p: Vector3){
+        this.fixedParticle.setPosition(p.x, p.y, p.z)
+    }
 }

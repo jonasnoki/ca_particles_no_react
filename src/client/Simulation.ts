@@ -49,6 +49,11 @@ export class Simulation {
             x: -2.50000001,
             y: 5.0000001,
             z: 0.0000001,
+        },
+        sphereCentre: {
+            x: 0.0000001,
+            y: -4.9999999,
+            z: 0.0000001,
         }
     };
 
@@ -58,7 +63,7 @@ export class Simulation {
     public scene: Scene;
 
     private planeHelpers: PlaneHelper[] = [];
-    private sphere = new Sphere(SPHERE_POSITION, SPHERE_RADIUS);
+    private sphere = new Sphere(new Vector3(this.params.sphereCentre.x, this.params.sphereCentre.y, this.params.sphereCentre.z), SPHERE_RADIUS);
     private sphereMesh = new Mesh(new SphereGeometry(SPHERE_RADIUS - Particle.radius), new MeshPhongMaterial());
     private ropesAndCloths: (Rope|Cloth)[] = [];
 
@@ -72,7 +77,7 @@ export class Simulation {
 
     private createSphere() {
         this.sphereMesh.material.color.setHSL(.96, 1, .5)
-        this.sphereMesh.position.set(SPHERE_POSITION.x, SPHERE_POSITION.y, SPHERE_POSITION.z);
+        this.sphereMesh.position.set(this.params.sphereCentre.x, this.params.sphereCentre.y, this.params.sphereCentre.z);
         this.scene.add(this.sphereMesh);
     }
 
@@ -109,13 +114,13 @@ export class Simulation {
         springsFolder.add(this.params, 'damping', 0, 500)
             .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d)));
         springsFolder.add(this.params, 'shearElasticity', 0, 500)
-            .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e)));
+            .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e, "shear")));
         springsFolder.add(this.params, 'shearDamping', 0, 500)
-            .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d)));
+            .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d, "shear")));
         springsFolder.add(this.params, 'bendElasticity', 0, 500)
-            .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e)));
+            .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e, "bend")));
         springsFolder.add(this.params, 'bendDamping', 0, 500)
-            .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d)));
+            .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d, "bend")));
         springsFolder.add(this.params, 'showSpring')
             .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setShowSpring(s)))
         const gravityFolder: any = gui.addFolder('Gravity');
@@ -127,11 +132,28 @@ export class Simulation {
             .onChange(() => this.applyGravityToAllParticles());
         const fixedPointFolder: any = gui.addFolder('Fixed Point');
         fixedPointFolder.add(this.params.fixedPoint, 'x', -5, 5)
-            .onChange(() => this.applyGravityToAllParticles());
+            .onChange(() => this.onFixedPointChange());
         fixedPointFolder.add(this.params.fixedPoint, 'y', -5, 5)
-            .onChange(() => this.applyGravityToAllParticles());
+            .onChange(() => this.onFixedPointChange());
         fixedPointFolder.add(this.params.fixedPoint, 'z', -5, 5)
-            .onChange(() => this.applyGravityToAllParticles());
+            .onChange(() => this.onFixedPointChange());
+        const sphereCentreFolder: any = gui.addFolder('Sphere Position');
+        sphereCentreFolder.add(this.params.sphereCentre, 'x', -5, 5)
+            .onChange(() => {
+                this.sphereMesh.position.x = this.params.sphereCentre.x;
+                this.sphere.center.x = this.params.sphereCentre.x
+            });
+        sphereCentreFolder.add(this.params.sphereCentre, 'y', -5, 5)
+            .onChange(() => {
+                this.sphereMesh.position.y = this.params.sphereCentre.y;
+                this.sphere.center.y = this.params.sphereCentre.y
+            });
+        sphereCentreFolder.add(this.params.sphereCentre, 'z', -5, 5)
+            .onChange(() => {
+                this.sphereMesh.position.z = this.params.sphereCentre.z;
+                this.sphere.center.z = this.params.sphereCentre.z
+            });
+
     }
 
     // private setMass(m: number) {
@@ -202,9 +224,15 @@ export class Simulation {
     }
 
     spawnCloth(){
+        const fixedIndices = [];
+        for (let i = 0; i< this.params.particlesPerRope; i++){
+            if(i % 3 === 0){
+                fixedIndices.push(i);
+            }
+        }
 
         const fixedPointA = new Vector3(this.params.fixedPoint.x, this.params.fixedPoint.y, this.params.fixedPoint.z);
-        const cloth = new Cloth(this.params.lifetime, this.params.bouncing, this.params.elasticity, this.params.damping, this.params.shearElasticity, this.params.shearDamping, this.params.bendElasticity, this.params.bendDamping, this.params.ropeFixed, this.params.showSpring, fixedPointA, this.params.particlesPerRope, this.params.particlesPerRope, [0,3,6,9]);
+        const cloth = new Cloth(this.params.lifetime, this.params.bouncing, this.params.elasticity, this.params.damping, this.params.shearElasticity, this.params.shearDamping, this.params.bendElasticity, this.params.bendDamping, this.params.ropeFixed, this.params.showSpring, fixedPointA, this.params.particlesPerRope, this.params.particlesPerRope, fixedIndices);
         const particles = cloth.getParticles();
         particles.forEach(p => {
             this.scene.add(p.getMesh());
@@ -298,5 +326,9 @@ export class Simulation {
                 i++
             }
         }
+    }
+
+    private onFixedPointChange() {
+        this.ropesAndCloths.forEach(rc => rc.setFixedPoint(new Vector3(this.params.fixedPoint.x, this.params.fixedPoint.y,this.params.fixedPoint.z)));
     }
 }
