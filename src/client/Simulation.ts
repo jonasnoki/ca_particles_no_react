@@ -45,6 +45,7 @@ export class Simulation {
             y: -9.81,
             z: 0,
         },
+        fixEvery: 3,
         fixedPoint: {
             x: -2.50000001,
             y: 5.0000001,
@@ -131,6 +132,8 @@ export class Simulation {
         gravityFolder.add(this.params.gravity, 'z', -20, 20)
             .onChange(() => this.applyGravityToAllParticles());
         const fixedPointFolder: any = gui.addFolder('Fixed Point');
+        fixedPointFolder.add(this.params, 'fixEvery', 1, 10, 1)
+            .name('fix every nth particle');
         fixedPointFolder.add(this.params.fixedPoint, 'x', -5, 5)
             .onChange(() => this.onFixedPointChange());
         fixedPointFolder.add(this.params.fixedPoint, 'y', -5, 5)
@@ -226,7 +229,7 @@ export class Simulation {
     spawnCloth(){
         const fixedIndices = [];
         for (let i = 0; i< this.params.particlesPerRope; i++){
-            if(i % 3 === 0){
+            if(i % this.params.fixEvery === 0){
                 fixedIndices.push(i);
             }
         }
