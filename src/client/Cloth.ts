@@ -1,16 +1,12 @@
 import {
-    BufferAttribute,
     BufferGeometry, DoubleSide, Float32BufferAttribute,
-    Line,
-    LineBasicMaterial,
-    Mesh,
-    MeshBasicMaterial, MeshPhongMaterial,
+    Mesh, MeshLambertMaterial,
+    MeshPhongMaterial, MeshToonMaterial,
     TextureLoader,
     Vector3,
 } from 'three'
 import { SpringParticle } from './SpringParticle'
 import { Spring } from './Spring'
-import { Face3, Geometry } from 'three/examples/jsm/deprecated/Geometry'
 
 
 export class Cloth {
@@ -26,14 +22,14 @@ export class Cloth {
     public mesh: Mesh
     private geometry = new BufferGeometry()
     public static material = new MeshPhongMaterial({
-        color: 0xfaf0be,
+        color: 0x3c9663,
         side: DoubleSide
     })
 
     constructor(lifetime: number, bouncing: number, elasticity: number, damping: number, shearElasticity: number, shearDamping: number, bendElasticity: number, bendDamping: number, fixed: boolean, showSpring: boolean, startPosition: Vector3, numberOfRows = 50, numberOfColumns = numberOfRows, fixedIndices: Number[] = []) {
         const mass = 1 / (numberOfColumns * numberOfRows)
         const directionX = new Vector3((1 / numberOfColumns * 10) - (0.5 / numberOfColumns * 10), 0, 0)
-        const directionY = new Vector3(0, 0, (1 / numberOfRows * 10) - (0.5 / numberOfRows * 10)).negate()
+        const directionY = new Vector3(0, 0, (1 / numberOfRows * 10) - (0.5 / numberOfRows * 10))
 
         this.numberOfColumns = numberOfColumns
         this.numberOfRows = numberOfRows
@@ -133,6 +129,7 @@ export class Cloth {
             )
         }
         this.mesh = new Mesh(this.geometry, Cloth.material)
+        this.mesh.castShadow = true;
     }
 
     private updateNormalAndVertexBuffers() {

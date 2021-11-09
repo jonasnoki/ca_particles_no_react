@@ -9,7 +9,7 @@ import { Simulation } from './Simulation'
 function init() {
     const camera = new PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 100);
 
-    camera.position.set(0, 3, 20);
+    camera.position.set(0, 2, 12);
     camera.lookAt(0,-3,0);
 
     const scene = new Scene();
@@ -17,12 +17,11 @@ function init() {
     const light = new AmbientLight(0x404040); // soft white light
     scene.add(light);
 
-    const light2 = new DirectionalLight(0x404040, 1); // soft white light
-    scene.add(light2);
 
     const light3 = new DirectionalLight(0x404040, 4); // soft white light
     light3.position.set(0,15,15);
     light3.lookAt(0,0,0);
+    light3.shadow.autoUpdate = true;
     scene.add(light3);
 
 
