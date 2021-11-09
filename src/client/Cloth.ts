@@ -102,32 +102,6 @@ export class Cloth {
         this.setFixedPoint(startPosition)
         console.log('texture used')
 
-        if (!Cloth.material.map) {
-            // instantiate a loader
-            const loader = new TextureLoader()
-
-            // load a resource
-            loader.load(
-                // resource URL
-                'assets/pisa/nz.png',
-
-                // onLoad callback
-                (texture) => {
-                    // in this example we create the material when the texture is loaded
-                    console.log('texture loaded')
-                    // Cloth.material.map = texture
-                    this.mesh.material = Cloth.material
-                },
-
-                // onProgress callback currently not supported
-                undefined,
-
-                // onError callback
-                (err) => {
-                    console.error('An error happened.')
-                },
-            )
-        }
         this.mesh = new Mesh(this.geometry, Cloth.material)
         this.mesh.castShadow = true;
     }
