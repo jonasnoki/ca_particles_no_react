@@ -29,6 +29,9 @@ export class Simulation {
         showParticles: false,
         showSpring: false,
         showCloth: true,
+        enableNormalSpring: true,
+        enableShearSpring: true,
+        enableBendSpring: true,
         solverMethod: 'verlet',
         bouncing: 0.8,
         lifetime: 80,
@@ -113,12 +116,18 @@ export class Simulation {
             .onChange(() => this.togglePlaneHelperVisibility())
         gui.add(this.params, 'showParticles')
             .onChange((s: boolean) => this.particles.forEach(r => r.getMesh().visible = s))
-        gui.add(this.params, 'showSpring')
-            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setShowSpring(s)))
         gui.add(this.params, 'showCloth')
             .onChange((s: boolean) => this.ropesAndCloths.forEach(r => {
                 if (r.mesh) r.mesh.visible = s
             }))
+        gui.add(this.params, 'showSpring')
+            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setShowSpring(s)))
+        gui.add(this.params, 'enableNormalSpring')
+            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setEnableSpring(s, "normal")))
+        gui.add(this.params, 'enableShearSpring')
+            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setEnableSpring(s, "shear")))
+        gui.add(this.params, 'enableBendSpring')
+            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setEnableSpring(s, "bend")))
         const springsFolder: any = gui.addFolder('Springs')
         springsFolder.add(this.params, 'elasticity', 0, 500)
             .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e)))
@@ -258,6 +267,7 @@ export class Simulation {
             this.scene.add(s.getMesh())
         })
         this.scene.add(cloth.mesh)
+        cloth.mesh.visible = this.params.showCloth;
         this.ropesAndCloths.push(cloth)
     }
 

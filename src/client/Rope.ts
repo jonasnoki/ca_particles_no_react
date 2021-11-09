@@ -61,6 +61,10 @@ export class Rope {
         this.fixed = fixed;
     }
 
+    setEnableSpring(){
+        return
+    }
+
     update(fixedPoint: { x: number; y: number; z: number }) {
         if(this.fixed){
             this.fixedParticle.setPosition(fixedPoint.x, fixedPoint.y, fixedPoint.z);

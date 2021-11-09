@@ -1,8 +1,7 @@
 import {
     BufferGeometry, DoubleSide, Float32BufferAttribute,
-    Mesh, MeshLambertMaterial,
-    MeshPhongMaterial, MeshToonMaterial,
-    TextureLoader,
+    Mesh,
+    MeshPhongMaterial,
     Vector3,
 } from 'three'
 import { SpringParticle } from './SpringParticle'
@@ -163,6 +162,10 @@ export class Cloth {
 
     setShowSpring(showSpring: boolean): void {
         this.springs.forEach(s => s.setShowSpring(showSpring))
+    }
+
+    setEnableSpring(enabled: boolean, type: "normal" | "shear" | "bend" = "normal"): void {
+        this.springs.forEach(s => s.setEnabled(enabled, type))
     }
 
     setFixed(fixed: boolean): void {
