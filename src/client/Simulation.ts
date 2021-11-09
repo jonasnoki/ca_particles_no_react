@@ -27,7 +27,9 @@ export class Simulation {
         spawnMethod: "cloth",
         arePlanesVisible: false,
         ropeFixed: true,
-        showSpring: true,
+        showParticles: false,
+        showSpring: false,
+        showCloth: true,
         solverMethod: "verlet",
         bouncing: 0.8,
         lifetime: 80,
@@ -45,7 +47,7 @@ export class Simulation {
             y: -9.81,
             z: 0,
         },
-        fixEvery: 3,
+        fixEvery: 1,
         fixedPoint: {
             x: -2.50000001,
             y: 5.0000001,
@@ -53,7 +55,7 @@ export class Simulation {
         },
         sphereCentre: {
             x: 0.0000001,
-            y: -4.9999999,
+            y: -3.9999999,
             z: 0.0000001,
         }
     };
@@ -109,6 +111,14 @@ export class Simulation {
         gui.add(this.params, 'arePlanesVisible')
             .name('Show Planes')
             .onChange(() => this.togglePlaneHelperVisibility());
+        gui.add(this.params, 'showParticles')
+            .onChange((s: boolean) => this.particles.forEach(r => r.getMesh().visible = s))
+        gui.add(this.params, 'showSpring')
+            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setShowSpring(s)))
+        gui.add(this.params, 'showCloth')
+            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => {
+                if(r.mesh) r.mesh.visible = s;
+            }))
         const springsFolder: any = gui.addFolder('Springs');
         springsFolder.add(this.params, 'elasticity', 0, 500)
             .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e)));
@@ -122,8 +132,6 @@ export class Simulation {
             .onChange((e: number) => this.ropesAndCloths.forEach(r => r.setElasticity(e, "bend")));
         springsFolder.add(this.params, 'bendDamping', 0, 500)
             .onChange((d: number) => this.ropesAndCloths.forEach(r => r.setDamping(d, "bend")));
-        springsFolder.add(this.params, 'showSpring')
-            .onChange((s: boolean) => this.ropesAndCloths.forEach(r => r.setShowSpring(s)))
         const gravityFolder: any = gui.addFolder('Gravity');
         gravityFolder.add(this.params.gravity, 'x', -20, 20)
             .onChange(() => this.applyGravityToAllParticles());
@@ -216,7 +224,9 @@ export class Simulation {
         const rope = new Rope(this.params.lifetime, this.params.bouncing, this.params.elasticity, this.params.damping, this.params.ropeFixed, this.params.showSpring, fixedPoint, this.params.particlesPerRope);
         const particles = rope.getParticles();
         particles.forEach(p => {
-            this.scene.add(p.getMesh());
+            const mesh = p.getMesh();
+            mesh.visible = this.params.showParticles;
+            this.scene.add(mesh);
             this.particles.push(p)
         })
         const springs = rope.getSprings();
@@ -238,17 +248,23 @@ export class Simulation {
         const cloth = new Cloth(this.params.lifetime, this.params.bouncing, this.params.elasticity, this.params.damping, this.params.shearElasticity, this.params.shearDamping, this.params.bendElasticity, this.params.bendDamping, this.params.ropeFixed, this.params.showSpring, fixedPointA, this.params.particlesPerRope, this.params.particlesPerRope, fixedIndices);
         const particles = cloth.getParticles();
         particles.forEach(p => {
-            this.scene.add(p.getMesh());
+            const mesh = p.getMesh();
+            mesh.visible = this.params.showParticles;
+            this.scene.add(mesh);
             this.particles.push(p)
         })
         const springs = cloth.getSprings();
         springs.forEach(s => {
             this.scene.add(s.getMesh());
         })
+        this.scene.add(cloth.mesh);
         this.ropesAndCloths.push(cloth);
     }
 
     removeAllParticles() {
+        this.ropesAndCloths.forEach(rc => {
+            if (rc.mesh) this.scene.remove(rc.mesh)
+        });
         this.particles.forEach(p => {
             p.delete()
         });
@@ -307,7 +323,9 @@ export class Simulation {
             }
                 break;
         }
-        this.scene.add(p.getMesh());
+        const mesh = p.getMesh();
+        mesh.visible = this.params.showParticles;
+        this.scene.add(mesh);
     }
 
     private degsToRads(deg: number) {

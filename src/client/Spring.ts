@@ -18,6 +18,7 @@ export class Spring {
     public type: "normal" | "shear" | "bend";
     private mesh: Line
     private showSpring: boolean
+    private positionArray: Float32Array;
     private positionBuffer: BufferAttribute;
 
     private geometry = new BufferGeometry()
@@ -36,7 +37,8 @@ export class Spring {
         this.mesh = new Line(this.geometry, Spring.material)
         const pA = this.particleA.getCurrentPosition();
         const pB = this.particleB.getCurrentPosition();
-        this.positionBuffer =  new BufferAttribute(new Float32Array([pA.x, pA.y, pA.z, pB.x, pB.y, pB.z]), 3)
+        this.positionArray = new Float32Array([pA.x, pA.y, pA.z, pB.x, pB.y, pB.z]);
+        this.positionBuffer =  new BufferAttribute(this.positionArray, 3)
         this.geometry.setAttribute('position', this.positionBuffer);
         this.mesh.visible = this.showSpring;
     }
@@ -50,8 +52,8 @@ export class Spring {
     }
 
     public setShowSpring(s: boolean) {
-        this.particleA.getMesh().visible = !s
-        this.particleB.getMesh().visible = !s
+        // this.particleA.getMesh().visible = !s
+        // this.particleB.getMesh().visible = !s
         this.showSpring = s
         this.mesh.visible = s
     }
@@ -61,8 +63,12 @@ export class Spring {
         const pB = this.particleB.getCurrentPosition().clone()
 
         if (this.showSpring) {
-            this.positionBuffer.setXYZ(0, pA.x, pA.y, pA.z);
-            this.positionBuffer.setXYZ(1, pB.x, pB.y, pB.z);
+            this.positionArray[0] = pA.x;
+            this.positionArray[1] = pA.y;
+            this.positionArray[2] = pA.z;
+            this.positionArray[3] = pB.x;
+            this.positionArray[4] = pB.y;
+            this.positionArray[5] = pB.z;
             this.positionBuffer.needsUpdate = true;
         }
         const pbpa = pB.sub(pA)

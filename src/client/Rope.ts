@@ -7,6 +7,7 @@ export class Rope {
     private particles: SpringParticle[] = [];
     private springs: Spring[] = [];
     private fixedParticle: SpringParticle;
+    public mesh = null;
 
     constructor(lifetime: number, bouncing: number, elasticity: number, damping: number, fixed: boolean, showSpring: boolean, startPosition: Vector3, numberOfParticles = 50) {
         const mass = 1 / numberOfParticles;

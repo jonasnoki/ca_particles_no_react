@@ -11,7 +11,7 @@ export class Particle {
     private fixed: boolean = false;
     private firstRound = true;
 
-    public static radius = 0.2;
+    public static radius = 0.07;
 
     private mesh: Mesh;
     private static geometry = new SphereGeometry(Particle.radius);

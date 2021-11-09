@@ -20,6 +20,17 @@ function init() {
     const light2 = new DirectionalLight(0x404040, 1); // soft white light
     scene.add(light2);
 
+    const light3 = new DirectionalLight(0x404040, 4); // soft white light
+    light3.position.set(0,15,15);
+    light3.lookAt(0,0,0);
+    scene.add(light3);
+
+
+    //
+    // const light4 = new DirectionalLight(0x404040, 4); // soft white light
+    // light4.position.set(-4,-2,0);
+    // light4.lookAt(0,0,0);
+    // scene.add(light4);
 
 
     const gui = new GUI( { width: 400 } );
